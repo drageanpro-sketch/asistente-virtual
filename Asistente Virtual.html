@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aegis - Asistente de Ciberseguridad</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --secondary: #3f37c9;
+            --accent: #4cc9f0;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --shadow: rgba(0, 0, 0, 0.08);
+            --shadow-hover: rgba(67, 97, 238, 0.15);
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .chat-container {
+            width: 100%;
+            max-width: 1000px;
+            height: 90vh;
+            background-color: var(--card);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px var(--shadow);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .chat-header {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="white" opacity="0.05"/></svg>');
+            pointer-events: none;
+        }
+        
+        .bot-icon {
+            width: 70px;
+            height: 70px;
+            margin-right: 20px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 2;
+            animation: pulse-glow 2s infinite alternate;
+        }
+        
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 8px 20px rgba(67, 97, 238, 0.2); }
+            100% { box-shadow: 0 8px 30px rgba(67, 97, 238, 0.4); }
+        }
+        
+        .bot-info {
+            flex: 1;
+            position: relative;
+            z-index: 2;
+            min-width: 0;
+        }
+        
+        .bot-info h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .bot-info p {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+        }
+        
+        .chat-status {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 18px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 2;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--success);
+            margin-right: 10px;
+            position: relative;
+        }
+        
+        .status-indicator::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border-radius: 50%;
+            background-color: var(--success);
+            opacity: 0.4;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.4; }
+            70% { transform: scale(1.5); opacity: 0; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        .chat-status span {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .user-type-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.2) 100%);
+            border-radius: 20px;
+            font-size: 12px;
+            color: white;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(5px);
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg);
+        }
+        
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--primary-light);
+            border-radius: 10px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+        
+        .message {
+            max-width: 78%;
+            margin-bottom: 24px;
+            padding: 18px 22px;
+            border-radius: 22px;
+            line-height: 1.6;
+            animation: fadeInUp 0.4s cubic-bezier(0.21, 0.61, 0.35, 1);
+            position: relative;
+            word-wrap: break-word;
+            hyphens: auto;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .bot-message {
+            background-color: white;
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 8px;
+            align-self: flex-start;
+            box-shadow: 0 4px 12px var(--shadow);
+            border-left: 4px solid var(--primary);
+        }
+        
+        .bot-message::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -12px;
+            width: 0;
+            height: 0;
+            border-top: 12px solid white;
+            border-left: 12px solid transparent;
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            border-bottom-right-radius: 8px;
+            align-self: flex-end;
+            box-shadow: 0 6px 16px rgba(67, 97, 238, 0.25);
+        }
+        
+        .user-message::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -12px;
+            width: 0;
+            height: 0;
+            border-top: 12px solid var(--primary);
+            border-right: 12px solid transparent;
+        }
+        
+        .message-content {
+            font-size: 15.5px;
+            line-height: 1.6;
+        }
+        
+        .message-time {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 10px;
+            text-align: right;
+            font-weight: 500;
+        }
+        
+        .user-message .message-time {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Estilos para secciones de respuesta */
+        .explanation-section {
+            background: linear-gradient(135deg, rgba(76, 201, 240, 0.1) 0%, rgba(67, 97, 238, 0.05) 100%);
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border-left: 4px solid var(--accent);
+        }
+        
+        .services-section {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(67, 97, 238, 0.05) 100%);
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border-left: 4px solid var(--success);
+        }
+        
+        .info-section {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(67, 97, 238, 0.05) 100%);
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .training-section {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(67, 97, 238, 0.05) 100%);
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border-left: 4px solid #a855f7;
+        }
+        
+        .whatsapp-section {
+            background: linear-gradient(135deg, rgba(37, 211, 102, 0.1) 0%, rgba(67, 97, 238, 0.05) 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border-left: 4px solid #25D366;
+            text-align: center;
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .services-list, .info-list, .training-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .services-list li, .info-list li, .training-list li {
+            padding: 8px 0;
+            padding-left: 24px;
+            position: relative;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .services-list li:last-child, .info-list li:last-child, .training-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .services-list li::before {
+            content: '🛡️';
+            position: absolute;
+            left: 0;
+            top: 8px;
+        }
+        
+        .info-list li::before {
+            content: '📍';
+            position: absolute;
+            left: 0;
+            top: 8px;
+        }
+        
+        .training-list li::before {
+            content: '🎓';
+            position: absolute;
+            left: 0;
+            top: 8px;
+        }
+        
+        .quick-replies {
+            padding: 24px 32px;
+            background-color: white;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            max-height: 160px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+        
+        .quick-reply-btn {
+            background-color: white;
+            border: 1.5px solid var(--primary-light);
+            color: var(--primary);
+            padding: 12px 22px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14.5px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(67, 97, 238, 0.1);
+        }
+        
+        .quick-reply-btn:hover {
+            background-color: var(--primary);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px var(--shadow-hover);
+            border-color: var(--primary);
+        }
+        
+        .chat-input-area {
+            display: flex;
+            padding: 24px 32px;
+            border-top: 1px solid var(--border);
+            background-color: white;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+        
+        #user-input {
+            width: 100%;
+            padding: 18px 24px;
+            padding-right: 60px;
+            border: 2px solid var(--border);
+            border-radius: 50px;
+            background-color: var(--bg);
+            color: var(--text);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        #user-input:focus {
+            border-color: var(--primary);
+            background-color: white;
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+        }
+        
+        .input-icon {
+            position: absolute;
+            right: 22px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            font-size: 20px;
+        }
+        
+        #send-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            cursor: pointer;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 6px 16px rgba(67, 97, 238, 0.25);
+            flex-shrink: 0;
+        }
+        
+        #send-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(67, 97, 238, 0.35);
+        }
+        
+        #send-btn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+        
+        /* Botón de limpieza en el área de entrada */
+        #clear-chat-btn {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1.5px solid var(--danger);
+            color: var(--danger);
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        #clear-chat-btn:hover {
+            background-color: var(--danger);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(248, 113, 113, 0.25);
+        }
+        
+	.welcome-message {
+            text-align: center;
+            margin-bottom: 32px;
+            padding: 28px;
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(72, 149, 239, 0.05) 100%);
+            border-radius: 22px;
+            border: 1px solid rgba(67, 97, 238, 0.1);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+        }
+        
+        .welcome-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .welcome-message h2 {
+            font-size: 24px;
+            color: var(--text);
+            margin-bottom: 12px;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        
+        .welcome-message p {
+            font-size: 16px;
+            color: var(--text-light);
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+            align-self: flex-start;
+            background-color: white;
+            padding: 16px 24px;
+            border-radius: 22px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px var(--shadow);
+            border-left: 4px solid var(--accent);
+        }
+        
+        .typing-text {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-right: 16px;
+            font-weight: 500;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .typing-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--primary-light);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        .typing-dot:nth-child(3) { animation-delay: 0s; }
+        
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1.1); opacity: 1; }
+        }
+
+
+        /* Estilos para WhatsApp */
+        .whatsapp-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #25D366;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        
+        .whatsapp-link:hover {
+            background-color: #128C7E;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.3);
+        }
+        
+        .whatsapp-info {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        .contact-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+        
+        .contact-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(67, 97, 238, 0.3);
+        }
+        
+        .context-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background-color: rgba(76, 201, 240, 0.1);
+            color: var(--text);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            margin: 5px 0;
+            border: 1px solid rgba(76, 201, 240, 0.3);
+        }
+        
+        .tone-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 15px;
+            color: var(--text-light);
+            font-size: 12px;
+            padding: 6px 12px;
+            background: rgba(67, 97, 238, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(67, 97, 238, 0.1);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 95vh;
+                border-radius: 20px;
+            }
+            
+            .chat-header {
+                padding: 20px 24px;
+                flex-wrap: wrap;
+            }
+            
+            .chat-status {
+                margin-top: 10px;
+                margin-left: 0;
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .bot-icon {
+                width: 60px;
+                height: 60px;
+                margin-right: 16px;
+            }
+            
+            .bot-info h1 {
+                font-size: 24px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .user-type-tag {
+                margin-top: 5px;
+            }
+            
+            .chat-messages {
+                padding: 24px;
+            }
+            
+            .message {
+                max-width: 90%;
+                padding: 16px 20px;
+            }
+            
+            .quick-replies {
+                padding: 20px 24px;
+                max-height: 140px;
+            }
+            
+            .quick-reply-btn {
+                padding: 10px 18px;
+                font-size: 14px;
+            }
+            
+            .chat-input-area {
+                padding: 20px 24px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            #user-input {
+                padding: 16px 20px;
+                padding-right: 50px;
+                width: 100%;
+                order: 1;
+            }
+            
+            #send-btn {
+                width: 52px;
+                height: 52px;
+                order: 2;
+            }
+            
+            #clear-chat-btn {
+                order: 3;
+                padding: 10px 16px;
+                font-size: 13px;
+                width: 100%;
+                justify-content: center;
+                margin-top: 10px;
+            }
+            
+            .whatsapp-link {
+                padding: 12px 20px;
+                font-size: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            
+            .chat-container {
+                border-radius: 16px;
+            }
+            
+            .quick-replies {
+                gap: 10px;
+            }
+            
+            .quick-reply-btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .welcome-message {
+                padding: 20px;
+            }
+            
+            .welcome-message h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="header-overlay"></div>
+            <div class="bot-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#4361ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <path d="M12 8v4M12 16h.01"/>
+                </svg>
+            </div>
+            <div class="bot-info">
+                <h1>Aegis <span class="user-type-tag" id="user-type">👤 General</span></h1>
+                <p>Tu asistente de seguridad informática</p>
+            </div>
+            <div class="chat-status">
+                <div class="status-indicator"></div>
+                <span id="status-text">Listo para ayudarte</span>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chat-messages">
+            <div class="welcome-message">
+                <div class="welcome-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h2>¡Hola! Soy Aegis, tu asistente virtual especializado en seguridad informática.</h2>
+                <p>Estoy aquí para ayudarte a proteger tu información y resolver tus dudas sobre nuestros servicios. ¿En qué puedo ayudarte hoy?</p>
+                <div class="context-badge">
+                    <i class="fas fa-info-circle"></i>
+                    Mi tono se adapta a tus necesidades: técnico, simple o empresarial
+                </div>
+            </div>
+        </div>
+        
+        <div class="quick-replies" id="quick-replies">
+            <!-- Los botones de quick replies se agregarán aquí dinámicamente -->
+        </div>
+        
+        <div class="chat-input-area">
+            <div class="input-wrapper">
+                <input type="text" id="user-input" placeholder="Escribe tu pregunta sobre ciberseguridad...">
+                <div class="input-icon">
+                    <i class="far fa-keyboard"></i>
+                </div>
+            </div>
+            <button id="send-btn">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+            <button id="clear-chat-btn" title="Limpiar chat y comenzar de nuevo">
+                <i class="fas fa-trash-alt"></i> Limpiar Chat
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Sistema de Usuario y Contexto Mejorado
+        class UserContext {
+            constructor() {
+                this.userType = 'general';
+                this.preferredTone = 'balanced';
+                this.interactionCount = 0;
+                this.technicalKeywords = [];
+                this.businessKeywords = [];
+                this.personalKeywords = [];
+                this.initializeKeywords();
+            }
+            
+            initializeKeywords() {
+                this.technicalKeywords = [
+                    'firewall', 'siem', 'edr', 'vpn', 'ssl', 'tls', 'api', 'server', 
+                    'protocolo', 'puerto', 'configuración', 'infraestructura', 'redes',
+                    'cifrado', 'autenticación', 'autorización', 'endpoint', 'parche',
+                    'vulnerabilidad', 'exploit', 'pentesting', 'hardening', 'backup',
+                    'restore', 'disaster recovery', 'ids', 'ips', 'dmz', 'proxy'
+                ];
+                
+                this.businessKeywords = [
+                    'empresa', 'negocio', 'corporación', 'corporativo', 'pyme',
+                    'empleados', 'equipo', 'gerencia', 'director', 'jefe',
+                    'presupuesto', 'inversión', 'roi', 'productividad', 'continuidad',
+                    'cumplimiento', 'normativa', 'regulación', 'legal', 'contrato',
+                    'proveedor', 'cliente', 'auditoría', 'riesgo', 'estrategia',
+                    'corporativa', 'organización', 'departamento', 'staff', 'personal'
+                ];
+                
+                this.personalKeywords = [
+                    'mi', 'yo', 'personal', 'casa', 'hogar', 'familia', 'amigo',
+                    'computadora', 'pc', 'laptop', 'tablet', 'celular', 'teléfono',
+                    'fotos', 'documentos', 'archivos', 'cuenta', 'contraseña',
+                    'internet', 'wifi', 'red', 'doméstica', 'hogareña', 'privado',
+                    'individual', 'usuario', 'particular', 'propio', 'mío'
+                ];
+            }
+            
+            analyzeQuestion(question) {
+                this.interactionCount++;
+                const lowerQuestion = question.toLowerCase();
+                
+                this.detectUserType(lowerQuestion);
+                this.detectPreferredTone(lowerQuestion);
+                this.updateUI();
+                
+                return {
+                    userType: this.userType,
+                    tone: this.preferredTone,
+                    isTechnical: this.hasTechnicalTerms(lowerQuestion),
+                    isBusiness: this.hasBusinessTerms(lowerQuestion),
+                    isPersonal: this.hasPersonalTerms(lowerQuestion)
+                };
+            }
+            
+            detectUserType(lowerQuestion) {
+                let techScore = 0;
+                let businessScore = 0;
+                let personalScore = 0;
+                
+                this.technicalKeywords.forEach(keyword => {
+                    if (lowerQuestion.includes(keyword)) techScore++;
+                });
+                
+                this.businessKeywords.forEach(keyword => {
+                    if (lowerQuestion.includes(keyword)) businessScore++;
+                });
+                
+                this.personalKeywords.forEach(keyword => {
+                    if (lowerQuestion.includes(keyword)) personalScore++;
+                });
+                
+                const scores = { techScore, businessScore, personalScore };
+                const maxScore = Math.max(techScore, businessScore, personalScore);
+                
+                if (maxScore === 0) {
+                    this.userType = 'general';
+                } else if (maxScore === techScore) {
+                    this.userType = 'tecnico';
+                } else if (maxScore === businessScore) {
+                    this.userType = 'empresa';
+                } else {
+                    this.userType = 'personal';
+                }
+            }
+            
+            detectPreferredTone(lowerQuestion) {
+                if (this.userType === 'tecnico') {
+                    this.preferredTone = 'technical';
+                } else if (this.userType === 'empresa') {
+                    this.preferredTone = 'business';
+                } else if (this.userType === 'personal') {
+                    this.preferredTone = 'simple';
+                } else {
+                    if (this.hasTechnicalTerms(lowerQuestion)) {
+                        this.preferredTone = 'technical';
+                    } else if (this.hasBusinessTerms(lowerQuestion)) {
+                        this.preferredTone = 'business';
+                    } else {
+                        this.preferredTone = 'simple';
+                    }
+                }
+            }
+            
+            hasTechnicalTerms(text) {
+                return this.technicalKeywords.some(keyword => text.includes(keyword));
+            }
+            
+            hasBusinessTerms(text) {
+                return this.businessKeywords.some(keyword => text.includes(keyword));
+            }
+            
+            hasPersonalTerms(text) {
+                return this.personalKeywords.some(keyword => text.includes(keyword));
+            }
+            
+            updateUI() {
+                const userTypeElement = document.getElementById('user-type');
+                const statusText = document.getElementById('status-text');
+                
+                const userTypeLabels = {
+                    'empresa': '🏢 Empresa',
+                    'personal': '👤 Personal',
+                    'tecnico': '⚙️ Técnico',
+                    'general': '👤 General'
+                };
+                
+                const toneLabels = {
+                    'simple': 'Simple',
+                    'technical': 'Técnico',
+                    'business': 'Empresarial',
+                    'balanced': 'Balanceado'
+                };
+                
+                userTypeElement.textContent = userTypeLabels[this.userType] || '👤 General';
+                
+                if (this.interactionCount === 1) {
+                    statusText.textContent = "Analizando tu consulta...";
+                } else if (this.interactionCount > 3) {
+                    statusText.textContent = `Modo: ${toneLabels[this.preferredTone]}`;
+                } else {
+                    statusText.textContent = "Listo para ayudarte";
+                }
+            }
+            
+            reset() {
+                this.userType = 'general';
+                this.preferredTone = 'balanced';
+                this.interactionCount = 0;
+                this.updateUI();
+            }
+        }
+
+        // Base de Conocimientos Completa
+        const knowledgeBase = {
+            "horario": {
+                keywords: ["horario", "horas", "atienden", "abierto", "cerrado", "cuándo", "apertura", "cierre"],
+                isInfo: true,
+                info: {
+                    simple: `
+                        <div class="info-section">
+                            <div class="section-title">
+                                <i class="fas fa-clock"></i> Nuestro Horario de Atención:
+                            </div>
+                            <ul class="info-list">
+                                <li><strong>Lunes a Viernes:</strong> 9:00 AM - 6:00 PM</li>
+                                <li><strong>Sábados:</strong> 10:00 AM - 2:00 PM</li>
+                                <li><strong>Domingos:</strong> Cerrado</li>
+                                <li><strong>Emergencias:</strong> 24/7 vía WhatsApp</li>
+                            </ul>
+                            <p style="margin-top: 10px; font-style: italic;">
+                                <i class="fas fa-info-circle"></i> Para emergencias de seguridad, contamos con soporte prioritario las 24 horas.
+                            </p>
+                        </div>
+                    `,
+                    technical: `
+                        <div class="info-section">
+                            <div class="section-title">
+                                <i class="fas fa-clock"></i> Horarios Operativos:
+                            </div>
+                            <ul class="info-list">
+                                <li><strong>Horario Comercial:</strong> Lunes-Viernes 09:00-18:00 (UTC-5)</li>
+                                <li><strong>Soporte Técnico:</strong> Lunes-Sábado 08:00-20:00</li>
+                                <li><strong>SLA Crítico:</strong> 24/7 para incidentes de seguridad</li>
+                                <li><strong>Monitorización:</strong> 24/7/365 sin interrupciones</li>
+                            </ul>
+                        </div>
+                    `,
+                    business: `
+                        <div class="info-section">
+                            <div class="section-title">
+                                <i class="fas fa-clock"></i> Horario Corporativo:
+                            </div>
+                            <ul class="info-list">
+                                <li><strong>Atención Ejecutiva:</strong> Lunes-Viernes 8:00-20:00</li>
+                                <li><strong>Soporte Empresarial:</strong> 24/7 para clientes premium</li>
+                                <li><strong>Respuesta a Incidentes:</strong> Máximo 1 hora (SLA Gold)</li>
+                                <li><strong>Consultoría Estratégica:</strong> Por cita previa</li>
+                            </ul>
+                        </div>
+                    `
+                }
+            },
+            "ubicacion": {
+                keywords: ["ubicación", "dirección", "dónde están", "local", "oficina", "direccion", "sucursal"],
+                isInfo: true,
+                info: {
+                    simple: `
+                        <div class="info-section">
+                            <div class="section-title">
+                                <i class="fas fa-map-marker-alt"></i> Nuestra Ubicación:
+                            </div>
+                            <ul class="info-list">
+                                <li><strong>Dirección:</strong> Av. Tecnología #1234, Col. Digital</li>
+                                <li><strong>Ciudad:</strong> CyberCity</li>
+                                <li><strong>C.P.:</strong> 04510</li>
+                                <li><strong>Referencia:</strong> Frente al Parque Tecnológico</li>
+                            </ul>
+                            <p style="margin-top: 10px;">
+                                <i class="fas fa-car"></i> Estacionamiento gratuito disponible
+                            </p>
+                            <a href="https://maps.app.goo.gl/QwbsV61pbyfezrMj7" class="contact-link" style="margin-top: 15px;">
+                                <i class="fas fa-directions"></i> Ver en Google Maps
+                            </a>
+                        </div>
+                    `,
+                    technical: `
+                        <div class="info-section">
+                            <div class="section-title">
+                                <i class="fas fa-map-marker-alt"></i> Centro de Operaciones de Seguridad:
+                            </div>
+                            <ul class="info-list">
+                                <li><strong>Coordenadas:</strong> 19.4326° N, 99.1332° W</li>
+                                <li><strong>Dirección Técnica:</strong> Data Center #5, Zona Tecnológica</li>
+                                <li><strong>Nivel de Seguridad:</strong> Tier III</li>
+                                <li><strong>Acceso:</strong> Control biométrico 24/7</li>
+                            </ul>
+                        </div>
+                    `,
+                    business: `
+                        <div class="info-section">
+                            <div class="section-title">
+                                <i class="fas fa-map-marker-alt"></i> Oficinas Corporativas:
+                            </div>
+                            <ul class="info-list">
+                                <li><strong>Torre Executiva:</strong> Piso 25, Oficina 2501</li>
+                                <li><strong>Dirección Ejecutiva:</strong> Blvd. Corporativo 1000</li>
+                                <li><strong>Centro de Operaciones:</strong> Zona Franca Tecnológica</li>
+                                <li><strong>Reuniones Ejecutivas:</strong> Sala de juntas disponible</li>
+                            </ul>
+                            <p style="margin-top: 10px;">
+                                <i class="fas fa-phone"></i> Para visitas corporativas, agendar cita previa
+                            </p>
+                        </div>
+                    `
+                }
+            },
+            "contacto": {
+                keywords: ["teléfono", "contacto", "llamar", "correo", "email", "número", "celular", "whatsapp"],
+                isInfo: true,
+                info: {
+                    simple: `
+                        <div class="info-section">
+                            <div class="section-title">
+                                <i class="fas fa-address-book"></i> Contacto:
+                            </div>
+                            <ul class="info-list">
+                                <li><strong>Teléfono Fijo:</strong> (555) 123-4567</li>
+                                <li><strong>WhatsApp:</strong> +1 (555) 987-6543</li>
+                                <li><strong>Email:</strong> info@aegisseguridad.com</li>
+                                <li><strong>Sitio Web:</strong> www.aegisseguridad.com</li>
+                            </ul>
+                            <a href="https://wa.me/15559876543" target="_blank" class="whatsapp-link">
+                                <i class="fab fa-whatsapp"></i> Contactar por WhatsApp
+                            </a>
+                        </div>
+                    `,
+                    technical: `
+                        <div class="info-section">
+                            <div class="section-title">
+                                <i class="fas fa-headset"></i> Soporte Técnico:
+                            </div>
+                            <ul class="info-list">
+                                <li><strong>Soporte General:</strong> soporte@aegisseguridad.com</li>
+                                <li><strong>Emergencias Técnicas:</strong> +1 (555) 911-9111</li>
+                                <li><strong>Ticketing:</strong> tickets.aegisseguridad.com</li>
+                                <li><strong>Documentación:</strong> docs.aegisseguridad.com</li>
+                            </ul>
+                            <p style="margin-top: 10px; font-style: italic;">
+                                <i class="fas fa-exclamation-triangle"></i> Para incidentes críticos, use la línea de emergencia
+                            </p>
+                        </div>
+                    `,
+                    business: `
+                        <div class="info-section">
+                            <div class="section-title">
+                                <i class="fas fa-briefcase"></i> Contacto Empresarial:
+                            </div>
+                            <ul class="info-list">
+                                <li><strong>Ventas Corporativas:</strong> ventas@aegisseguridad.com</li>
+                                <li><strong>Consultoría Ejecutiva:</strong> ejecutivo@aegisseguridad.com</li>
+                                <li><strong>Teléfono Corporativo:</strong> +1 (555) 222-3333</li>
+                                <li><strong>Sala de Juntas Virtual:</strong> teams.aegisseguridad.com</li>
+                            </ul>
+                            <a href="#" class="contact-link" style="margin-top: 15px;">
+                                <i class="fas fa-calendar-check"></i> Agendar Reunión Ejecutiva
+                            </a>
+                        </div>
+                    `
+                }
+            },
+            "servicios": {
+                keywords: ["servicios", "ofrecen", "productos", "soluciones", "qué hacen", "qué ofrecen"],
+                explanations: {
+                    simple: "Ofrecemos una variedad de servicios para proteger tu información digital, desde seguridad básica hasta soluciones avanzadas.",
+                    technical: "Nuestro portafolio de servicios técnicos abarca desde implementación de controles de seguridad básicos hasta soluciones avanzadas de ciberdefensa, siguiendo metodologías reconocidas y mejores prácticas del sector.",
+                    business: "Proporcionamos un ecosistema completo de servicios de ciberseguridad empresarial diseñados para proteger activos críticos, garantizar cumplimiento regulatorio y fortalecer la postura de seguridad organizacional."
+                },
+                services: {
+                    simple: [
+                        "Protección antivirus y anti-malware",
+                        "Seguridad de redes Wi-Fi",
+                        "Copias de seguridad en la nube",
+                        "Asesoría personal básica",
+                        "Recuperación de datos"
+                    ],
+                    technical: [
+                        "Pentesting y auditorías de seguridad",
+                        "Implementación de firewalls NGFW",
+                        "Sistemas de detección de intrusos (IDS/IPS)",
+                        "Gestión de vulnerabilidades",
+                        "Monitoreo de seguridad 24/7"
+                    ],
+                    business: [
+                        "Consultoría estratégica en ciberseguridad",
+                        "Programas de cumplimiento normativo",
+                        "Planes de continuidad de negocio",
+                        "Gestión de incidentes de seguridad",
+                        "Capacitación corporativa"
+                    ]
+                },
+                isTechnical: true
+            },
+            "capacitacion": {
+                keywords: ["capacitación", "cursos", "entrenamiento", "formación", "aprender", "educación", "capacitacion", "capacitaciones"],
+                explanations: {
+                    simple: "Ofrecemos capacitaciones prácticas para que aprendas a proteger tu información digital y navegar seguro en internet.",
+                    technical: "Nuestros programas de capacitación técnica están diseñados para desarrollar habilidades especializadas en ciberseguridad, utilizando metodologías hands-on y laboratorios prácticos.",
+                    business: "Implementamos programas de capacitación empresarial que transforman la cultura de seguridad organizacional, reduciendo riesgos humanos y fortaleciendo la postura de seguridad corporativa."
+                },
+                services: {
+                    simple: [
+                        "Curso básico de seguridad digital",
+                        "Taller de protección contra phishing",
+                        "Seminario de seguridad en redes sociales",
+                        "Entrenamiento en contraseñas seguras",
+                        "Workshop de backup y recuperación"
+                    ],
+                    technical: [
+                        "Certificación en Ethical Hacking",
+                        "Curso avanzado de análisis de malware",
+                        "Entrenamiento en respuesta a incidentes",
+                        "Capacitación en firewalls y redes",
+                        "Workshop de forensia digital"
+                    ],
+                    business: [
+                        "Programa de concienciación corporativa",
+                        "Capacitación para equipos de TI",
+                        "Entrenamiento ejecutivo en ciberseguridad",
+                        "Workshop de cumplimiento normativo",
+                        "Simulaciones de ataques phishing empresarial"
+                    ]
+                },
+                isTechnical: true
+            },
+            "firewall": {
+                keywords: ["firewall", "cortafuegos", "filtro", "bloqueo", "puerto", "seguridad perimetral"],
+                explanations: {
+                    simple: "Un firewall es como un guardia de seguridad digital que controla qué información puede entrar y salir de tu red. Revisa todo el tráfico de internet y bloquea lo peligroso.",
+                    technical: "Un firewall es un sistema de seguridad de red que monitorea y controla el tráfico de red entrante y saliente basado en reglas de seguridad predeterminadas. Funciona a nivel de red (paquetes) y aplicación, implementando políticas de control de acceso mediante listas ACL (Access Control Lists).",
+                    business: "El firewall es un componente crítico de la seguridad perimetral empresarial que actúa como barrera entre la red interna confiable y redes externas no confiables, implementando políticas de seguridad corporativas y cumpliendo con regulaciones de protección de datos."
+                },
+                services: {
+                    simple: [
+                        "Instalación de firewall básico para tu hogar",
+                        "Configuración de seguridad Wi-Fi",
+                        "Protección contra intrusiones",
+                        "Monitoreo básico de red"
+                    ],
+                    technical: [
+                        "Implementación de firewalls de próxima generación (NGFW)",
+                        "Configuración de políticas granulares por aplicación/usuario",
+                        "Integración con sistemas SIEM para correlación de eventos",
+                        "Segmentación de red y microsegmentación",
+                        "VPN Site-to-Site y SSL VPN"
+                    ],
+                    business: [
+                        "Arquitectura de seguridad perimetral corporativa",
+                        "Firewalls de alta disponibilidad para continuidad de negocio",
+                        "Cumplimiento de regulaciones (GDPR, PCI-DSS, ISO 27001)",
+                        "Gestión centralizada de múltiples dispositivos",
+                        "Reporting ejecutivo y dashboards de seguridad"
+                    ]
+                },
+                isTechnical: true
+            },
+            "malware": {
+                keywords: ["virus", "malware", "ransomware", "antivirus", "infectado", "troyano", "spyware"],
+                explanations: {
+                    simple: "El malware es software malicioso diseñado para dañar tu computadora. Puede robar información, dañar archivos o tomar control de tu dispositivo.",
+                    technical: "Malware (Malicious Software) incluye diversas amenazas como virus, troyanos, ransomware, spyware y adware. Estos programas ejecutan acciones no autorizadas comprometiendo la confidencialidad, integridad y disponibilidad de los sistemas mediante técnicas de infección, persistencia y evasión.",
+                    business: "El malware representa una amenaza crítica para las operaciones empresariales, pudiendo causar interrupciones operacionales, robo de propiedad intelectual, violaciones de datos y daño reputacional, afectando directamente la continuidad del negocio y el cumplimiento regulatorio."
+                },
+                services: {
+                    simple: [
+                        "Limpieza y eliminación de virus",
+                        "Instalación de antivirus",
+                        "Protección en tiempo real",
+                        "Escaneo completo del sistema"
+                    ],
+                    technical: [
+                        "Endpoint Detection and Response (EDR)",
+                        "Sandboxing avanzado para análisis de amenazas",
+                        "Protección anti-ransomware con rollback automático",
+                        "Machine learning para detección de amenazas zero-day",
+                        "Gestión centralizada de endpoints"
+                    ],
+                    business: [
+                        "Solución empresarial de protección de endpoints",
+                        "Plan de respuesta a incidentes de malware",
+                        "Backups seguros y planes de recuperación",
+                        "Capacitación en concienciación de seguridad",
+                        "Seguro cibernético y gestión de riesgos"
+                    ]
+                },
+                isTechnical: true
+            },
+            "empresa": {
+                keywords: ["empresa", "negocio", "corporación", "pyme", "empleados", "corporativo", "organización"],
+                explanations: {
+                    simple: "La seguridad empresarial protege todos los aspectos digitales de una empresa: computadoras, servidores, datos y la información de los clientes.",
+                    technical: "La ciberseguridad empresarial implica la implementación de un framework de seguridad integral que abarca people, process y technology, incluyendo controles preventivos, detectivos y correctivos alineados con marcos como NIST, ISO 27001 o CIS Controls.",
+                    business: "La seguridad informática empresarial es una función estratégica que protege los activos digitales críticos, garantiza la continuidad operacional, cumple con requisitos regulatorios y protege la reputación de la organización frente a amenazas cibernéticas en constante evolución."
+                },
+                services: {
+                    simple: [
+                        "Protección básica para pequeñas empresas",
+                        "Seguridad de redes y Wi-Fi",
+                        "Copias de seguridad automáticas",
+                        "Asesoría básica de seguridad"
+                    ],
+                    technical: [
+                        "Arquitectura de seguridad zero-trust",
+                        "Sistema SIEM para correlación de eventos",
+                        "Gestión de vulnerabilidades y parches",
+                        "Pruebas de penetración y auditorías",
+                        "Automatización de respuestas (SOAR)"
+                    ],
+                    business: [
+                        "Programa de gestión de seguridad de la información",
+                        "Cumplimiento normativo y auditorías",
+                        "Plan de continuidad de negocio",
+                        "Seguro cibernético empresarial",
+                        "Concienciación y capacitación corporativa"
+                    ]
+                },
+                isTechnical: true
+            },
+            "asesoria": {
+                keywords: ["asesoría", "consultoría", "consejo", "recomendación", "hablar", "experto", "asesor"],
+                explanations: {
+                    simple: "La asesoría en ciberseguridad te ayuda a entender qué protección necesitas y cómo implementarla de manera efectiva.",
+                    technical: "La consultoría técnica en ciberseguridad involucra el análisis exhaustivo de la postura de seguridad actual, identificación de brechas, diseño de arquitecturas seguras y recomendaciones de implementación basadas en mejores prácticas del sector y estándares internacionales.",
+                    business: "La consultoría estratégica en ciberseguridad se enfoca en alinear las iniciativas de seguridad con los objetivos de negocio, gestionar riesgos cibernéticos, asegurar el cumplimiento regulatorio y desarrollar roadmaps de seguridad que generen valor comercial y competitividad."
+                },
+                services: {
+                    simple: [
+                        "Evaluación básica de seguridad",
+                        "Recomendaciones personalizadas",
+                        "Plan de acción paso a paso",
+                        "Seguimiento mensual"
+                    ],
+                    technical: [
+                        "Auditoría técnica de seguridad",
+                        "Diseño de arquitectura de seguridad",
+                        "Implementación de controles técnicos",
+                        "Pruebas de penetración",
+                        "Capacitación técnica especializada"
+                    ],
+                    business: [
+                        "Consultoría estratégica de ciberseguridad",
+                        "Evaluación de riesgos empresariales",
+                        "Cumplimiento regulatorio",
+                        "Plan de transformación de seguridad",
+                        "Consultoría para juntas directivas"
+                    ]
+                },
+                isTechnical: true
+            },
+            "precios": {
+                keywords: ["precio", "costo", "tarifas", "cuánto cuesta", "planes", "pago", "presupuesto"],
+                isInfo: true,
+                info: {
+                    simple: `
+                        <div class="info-section">
+                            <div class="section-title">
+                                <i class="fas fa-tag"></i> Planes y Precios:
+                            </div>
+                            <ul class="info-list">
+                                <li><strong>Básico:</strong> $29/mes - Protección personal</li>
+                                <li><strong>Avanzado:</strong> $59/mes - Hogar completo</li>
+                                <li><strong>Empresarial:</strong> Desde $199/mes - PYMES</li>
+                                <li><strong>Consultoría:</strong> $99/hora - Asesoría personal</li>
+                            </ul>
+                            <p style="margin-top: 10px;">
+                                <i class="fas fa-percentage"></i> Descuento del 15% en el primer año
+                            </p>
+                            <a href="#" class="contact-link" style="margin-top: 15px;">
+                                <i class="fas fa-file-invoice-dollar"></i> Solicitar Presupuesto Personalizado
+                            </a>
+                        </div>
+                    `,
+                    technical: `
+                        <div class="info-section">
+                            <div class="section-title">
+                                <i class="fas fa-tag"></i> Estructura de Precios Técnicos:
+                            </div>
+                            <ul class="info-list">
+                                <li><strong>Auditoría de Seguridad:</strong> Desde $1,500</li>
+                                <li><strong>Pentesting:</strong> $2,000 - $5,000 (dependiendo del alcance)</li>
+                                <li><strong>Implementación Firewall:</strong> $800 + licencias</li>
+                                <li><strong>Soporte Técnico:</strong> $120/hora o contratos anuales</li>
+                            </ul>
+                            <p style="margin-top: 10px; font-style: italic;">
+                                <i class="fas fa-calculator"></i> Todos los precios incluyen IVA y documentación técnica
+                            </p>
+                        </div>
+                    `,
+                    business: `
+                        <div class="info-section">
+                            <div class="section-title">
+                                <i class="fas fa-tag"></i> Planes Corporativos:
+                            </div>
+                            <ul class="info-list">
+                                <li><strong>Essential:</strong> $499/mes - Hasta 50 usuarios</li>
+                                <li><strong>Business:</strong> $999/mes - Hasta 200 usuarios</li>
+                                <li><strong>Enterprise:</strong> $2,499/mes - Soluciones completas</li>
+                                <li><strong>Consultoría Estratégica:</strong> Cotización personalizada</li>
+                            </ul>
+                            <p style="margin-top: 10px;">
+                                <i class="fas fa-handshake"></i> Contratos anuales con SLA garantizado
+                            </p>
+                            <a href="#" class="contact-link" style="margin-top: 15px;">
+                                <i class="fas fa-chart-line"></i> Solicitar Demo y ROI Personalizado
+                            </a>
+                        </div>
+                    `
+                }
+            }
+        };
+
+        // Mapeo de tonos
+        const toneIcons = {
+            'simple': '👤',
+            'technical': '⚙️',
+            'business': '💼',
+            'balanced': '⚖️'
+        };
+
+        const toneNames = {
+            'simple': 'Simple',
+            'technical': 'Técnico',
+            'business': 'Empresarial',
+            'balanced': 'Balanceado'
+        };
+
+        // Quick replies REORDENADAS: primero preguntas generales, luego técnicas
+        const quickReplies = [
+            // Preguntas generales primero
+            "Horario de atención",
+            "Ubicación y dirección",
+            "Información de contacto",
+            "Servicios que ofrecen",
+            "Precios y planes",
+            "Capacitaciones disponibles",
+            
+            // Consultas técnicas después
+            "¿Cómo funciona un firewall?",
+            "Mi computadora tiene virus",
+            "Seguridad para mi empresa",
+            "Necesito asesoría personalizada",
+            "Contactar por WhatsApp"
+        ];
+
+        // Elementos DOM
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const quickRepliesContainer = document.getElementById('quick-replies');
+        const clearChatBtn = document.getElementById('clear-chat-btn');
+
+        // Sistema
+        const userContext = new UserContext();
+
+        // Inicializar quick replies
+        function initQuickReplies() {
+            quickRepliesContainer.innerHTML = '';
+            quickReplies.forEach(reply => {
+                const button = document.createElement('button');
+                button.className = 'quick-reply-btn';
+                button.textContent = reply;
+                button.addEventListener('click', () => {
+                    sendMessage(reply);
+                });
+                quickRepliesContainer.appendChild(button);
+            });
+        }
+
+        // Detectar tema principal
+        function detectTopic(question) {
+            const lowerQuestion = question.toLowerCase();
+            
+            for (const topic in knowledgeBase) {
+                const topicData = knowledgeBase[topic];
+                for (const keyword of topicData.keywords) {
+                    if (lowerQuestion.includes(keyword)) {
+                        return topic;
+                    }
+                }
+            }
+            
+            // Detección por palabras específicas
+            if (lowerQuestion.includes('firewall')) return 'firewall';
+            if (lowerQuestion.includes('virus') || lowerQuestion.includes('malware')) return 'malware';
+            if (lowerQuestion.includes('empresa') || lowerQuestion.includes('negocio')) return 'empresa';
+            if (lowerQuestion.includes('asesor') || lowerQuestion.includes('consult')) return 'asesoria';
+            if (lowerQuestion.includes('horario') || lowerQuestion.includes('hora')) return 'horario';
+            if (lowerQuestion.includes('ubicacion') || lowerQuestion.includes('direccion')) return 'ubicacion';
+            if (lowerQuestion.includes('contacto') || lowerQuestion.includes('teléfono')) return 'contacto';
+            if (lowerQuestion.includes('precio') || lowerQuestion.includes('cuesta')) return 'precios';
+            if (lowerQuestion.includes('servicio') || lowerQuestion.includes('producto')) return 'servicios';
+            if (lowerQuestion.includes('capacitacion') || lowerQuestion.includes('curso')) return 'capacitacion';
+            
+            return 'servicios'; // Tema por defecto
+        }
+
+        // Crear sección de WhatsApp para temas técnicos
+        function createWhatsAppSection(topic, context) {
+            const phoneNumber = "15559876543";
+            let message = "";
+            let buttonText = "Más información por WhatsApp";
+            
+            switch (topic) {
+                case 'firewall':
+                    message = "Hola, necesito información técnica sobre implementación de firewalls";
+                    buttonText = "Consultar sobre firewalls por WhatsApp";
+                    break;
+                case 'malware':
+                    message = "Hola, necesito ayuda con protección contra malware y virus";
+                    buttonText = "Soporte antivirus por WhatsApp";
+                    break;
+                case 'empresa':
+                    message = "Hola, necesito información sobre seguridad empresarial para mi compañía";
+                    buttonText = "Consultoría empresarial por WhatsApp";
+                    break;
+                case 'asesoria':
+                    message = "Hola, necesito asesoría personalizada en ciberseguridad";
+                    buttonText = "Agendar asesoría por WhatsApp";
+                    break;
+                case 'servicios':
+                    message = "Hola, necesito información detallada sobre sus servicios de seguridad";
+                    buttonText = "Información de servicios por WhatsApp";
+                    break;
+                case 'capacitacion':
+                    message = "Hola, necesito información sobre sus programas de capacitación en ciberseguridad";
+                    buttonText = "Información de capacitaciones por WhatsApp";
+                    break;
+                default:
+                    message = "Hola, necesito información sobre sus servicios de ciberseguridad";
+            }
+            
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+            
+            return `
+                <div class="whatsapp-section">
+                    <div class="section-title">
+                        <i class="fab fa-whatsapp" style="color: #25D366;"></i> ¿Necesitas más información?
+                    </div>
+                    <p>Nuestros especialistas están disponibles para resolver tus dudas técnicas y ofrecerte soluciones personalizadas.</p>
+                    <a href="${whatsappUrl}" target="_blank" class="whatsapp-link">
+                        <i class="fab fa-whatsapp"></i> ${buttonText}
+                    </a>
+                    <p class="whatsapp-info">
+                        <i class="fas fa-clock"></i> Respuesta en menos de 15 minutos
+                    </p>
+                </div>
+            `;
+        }
+
+        // Crear respuesta estructurada
+        function createStructuredResponse(topic, context) {
+            const topicData = knowledgeBase[topic];
+            if (!topicData) return createDefaultResponse(context);
+            
+            let response = '';
+            
+            if (topicData.isInfo) {
+                // Para preguntas informativas (horario, ubicación, contacto, precios)
+                const info = topicData.info[context.tone] || topicData.info.simple;
+                response = info;
+            } else {
+                // Para preguntas técnicas/explicativas
+                const explanation = topicData.explanations[context.tone] || topicData.explanations.simple;
+                const services = topicData.services[context.tone] || topicData.services.simple;
+                
+                // Usar sección especial para capacitaciones
+                const sectionClass = topic === 'capacitacion' ? 'training-section' : 'explanation-section';
+                const sectionIcon = topic === 'capacitacion' ? 'fas fa-graduation-cap' : 'fas fa-lightbulb';
+                const sectionTitle = topic === 'capacitacion' ? 'Nuestras Capacitaciones:' : 'Explicación:';
+                
+                response = `<div class="${sectionClass}">
+                    <div class="section-title">
+                        <i class="${sectionIcon}"></i> ${sectionTitle}
+                    </div>
+                    <p>${explanation}</p>
+                </div>`;
+                
+                const servicesSectionTitle = topic === 'capacitacion' ? 'Programas de capacitación:' : 'Nuestros servicios relacionados:';
+                const servicesListClass = topic === 'capacitacion' ? 'training-list' : 'services-list';
+                
+                response += `<div class="services-section">
+                    <div class="section-title">
+                        <i class="fas fa-shield-alt"></i> ${servicesSectionTitle}
+                    </div>
+                    <ul class="${servicesListClass}">`;
+                
+                services.forEach(service => {
+                    response += `<li>${service}</li>`;
+                });
+                
+                response += `</ul>`;
+                
+                // Añadir sección de WhatsApp SIEMPRE para temas técnicos
+                if (topicData.isTechnical) {
+                    response += createWhatsAppSection(topic, context);
+                }
+                
+                response += `</div>`;
+            }
+            
+            // Añadir indicador de tono
+            response += `<div class="tone-indicator">
+                <i class="fas fa-comment-alt"></i> Tono: ${toneNames[context.tone]} ${toneIcons[context.tone]} | 
+                <i class="fas fa-user-tag"></i> Tipo: ${context.userType === 'empresa' ? '🏢 Empresa' : 
+                context.userType === 'tecnico' ? '⚙️ Técnico' : 
+                context.userType === 'personal' ? '👤 Personal' : '👤 General'}
+            </div>`;
+            
+            return response;
+        }
+
+        // Respuesta por defecto
+        function createDefaultResponse(context) {
+            const phoneNumber = "15559876543";
+            const message = encodeURIComponent("Hola, necesito información sobre sus servicios de ciberseguridad");
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+            
+            return `
+                <div class="explanation-section">
+                    <div class="section-title">
+                        <i class="fas fa-info-circle"></i> Sobre tu consulta:
+                    </div>
+                    <p>Como Aegis, puedo ayudarte con diversos temas de ciberseguridad. Te sugiero preguntar sobre:</p>
+                </div>
+                
+                <div class="services-section">
+                    <div class="section-title">
+                        <i class="fas fa-shield-alt"></i> Temas que puedo abordar:
+                    </div>
+                    <ul class="services-list">
+                        <li>Horarios y ubicación de nuestras oficinas</li>
+                        <li>Servicios y productos de seguridad</li>
+                        <li>Programas de capacitación disponibles</li>
+                        <li>Protección contra malware y virus</li>
+                        <li>Seguridad para empresas o uso personal</li>
+                        <li>Precios y planes disponibles</li>
+                        <li>Contacto y asesoría personalizada</li>
+                    </ul>
+                </div>
+                
+                <div class="whatsapp-section">
+                    <div class="section-title">
+                        <i class="fab fa-whatsapp" style="color: #25D366;"></i> ¿Necesitas ayuda específica?
+                    </div>
+                    <p>Nuestros expertos pueden ayudarte con consultas técnicas más detalladas.</p>
+                    <a href="${whatsappUrl}" target="_blank" class="whatsapp-link">
+                        <i class="fab fa-whatsapp"></i> Consultar con un especialista
+                    </a>
+                </div>
+                
+                <div class="tone-indicator">
+                    <i class="fas fa-comment-alt"></i> Tono: ${toneNames[context.tone]} ${toneIcons[context.tone]}
+                </div>
+            `;
+        }
+
+        // Obtener respuesta según contexto
+        function getResponseByContext(question) {
+            const analysis = userContext.analyzeQuestion(question);
+            const topic = detectTopic(question);
+            
+            return createStructuredResponse(topic, analysis);
+        }
+
+        // Limpiar chat y reiniciar
+        function clearChat() {
+            if (confirm("¿Estás seguro de que quieres limpiar el chat? Se perderá toda la conversación actual.")) {
+                chatMessages.innerHTML = '';
+                userContext.reset();
+                
+                // Agregar mensaje de bienvenida
+                const welcomeMessage = document.createElement('div');
+                welcomeMessage.className = 'welcome-message';
+                welcomeMessage.innerHTML = `
+                    <div class="welcome-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h2>¡Hola! Soy Aegis, tu asistente virtual especializado en seguridad informática.</h2>
+                    <p>He reiniciado la conversación. Estoy aquí para ayudarte a proteger tu información y resolver tus dudas sobre nuestros servicios. ¿En qué puedo ayudarte hoy?</p>
+                    <div class="context-badge">
+                        <i class="fas fa-info-circle"></i>
+                        Mi tono se adapta a tus necesidades: técnico, simple o empresarial
+                    </div>
+                `;
+                
+                chatMessages.appendChild(welcomeMessage);
+                
+                // Restaurar estado
+                document.getElementById('status-text').textContent = "Chat reiniciado - Listo para ayudarte";
+                
+                // Enviar mensaje de confirmación
+                setTimeout(() => {
+                    const confirmationMsg = `
+                        <div class="explanation-section">
+                            <div class="section-title">
+                                <i class="fas fa-check-circle"></i> Chat reiniciado exitosamente
+                            </div>
+                            <p>He limpiado toda la conversación anterior. Puedes comenzar una nueva consulta sobre ciberseguridad.</p>
+                        </div>
+                        
+                        <div class="services-section">
+                            <div class="section-title">
+                                <i class="fas fa-lightbulb"></i> Preguntas frecuentes:
+                            </div>
+                            <ul class="services-list">
+                                <li>"¿Cuál es su horario de atención?"</li>
+                                <li>"¿Dónde están ubicados?"</li>
+                                <li>"¿Qué servicios ofrecen?"</li>
+                                <li>"¿Tienen programas de capacitación?"</li>
+                                <li>"Mi computadora tiene virus"</li>
+                                <li>"Necesito proteger mi empresa"</li>
+                            </ul>
+                        </div>
+                    `;
+                    
+                    addMessage(confirmationMsg, false);
+                }, 500);
+            }
+        }
+
+        // Mostrar typing indicator
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <div class="typing-text">Aegis está analizando...</div>
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Ocultar typing indicator
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        // Agregar mensaje
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            if (isUser) {
+                messageDiv.innerHTML = `
+                    <div class="message-content">${content}</div>
+                    <div class="message-time">${time} 🕒</div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="message-content">${content}</div>
+                    <div class="message-time">${time} 🛡️</div>
+                `;
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                chatMessages.scrollTo({
+                    top: chatMessages.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 10);
+        }
+
+        // Enviar mensaje
+        async function sendMessage(messageText = null) {
+            const message = messageText || userInput.value.trim();
+            
+            if (message === '') return;
+            
+            addMessage(message, true);
+            userInput.value = '';
+            
+            sendBtn.disabled = true;
+            sendBtn.style.opacity = '0.7';
+            
+            showTypingIndicator();
+            
+            // Simular tiempo de procesamiento
+            await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400));
+            
+            hideTypingIndicator();
+            const botResponse = getResponseByContext(message);
+            addMessage(botResponse, false);
+            
+            sendBtn.disabled = false;
+            sendBtn.style.opacity = '1';
+            
+            // Actualizar estado
+            document.getElementById('status-text').textContent = "Listo para tu siguiente pregunta";
+        }
+
+        // Event listeners
+        sendBtn.addEventListener('click', () => sendMessage());
+        
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Botón de limpieza
+        clearChatBtn.addEventListener('click', clearChat);
+
+        // Enfoque automático
+        userInput.focus();
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            initQuickReplies();
+            
+            setTimeout(() => {
+                addMessage("Puedes preguntarme sobre cualquier tema de ciberseguridad. También puedo informarte sobre horarios, ubicación, precios, capacitaciones y todos nuestros servicios. Para consultas técnicas, siempre incluyo un enlace directo a WhatsApp para más información.", false);
+            }, 1200);
+            
+            setTimeout(() => {
+                document.querySelector('.chat-container').style.opacity = '1';
+            }, 100);
+        });
+
+        // Funciones de prueba
+        window.testFirewall = function() {
+            userInput.value = "¿Cómo funciona un firewall?";
+            sendMessage();
+        };
+        
+        window.testVirus = function() {
+            userInput.value = "Mi computadora tiene un virus";
+            sendMessage();
+        };
+        
+        window.testCapacitacion = function() {
+            userInput.value = "¿Qué capacitaciones ofrecen?";
+            sendMessage();
+        };
+        
+        window.testServicios = function() {
+            userInput.value = "¿Qué servicios técnicos ofrecen?";
+            sendMessage();
+        };
+    </script>
+</body>
+</html>
