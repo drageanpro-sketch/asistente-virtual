@@ -494,7 +494,7 @@
             box-shadow: 0 6px 20px rgba(248, 113, 113, 0.25);
         }
         
-	.welcome-message {
+        .welcome-message {
             text-align: center;
             margin-bottom: 32px;
             padding: 28px;
@@ -577,7 +577,6 @@
             40% { transform: scale(1.1); opacity: 1; }
         }
 
-
         /* Estilos para WhatsApp */
         .whatsapp-link {
             display: inline-flex;
@@ -626,6 +625,27 @@
         .contact-link:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(67, 97, 238, 0.3);
+        }
+        
+        /* Estilo específico para enlaces con icono de WhatsApp */
+        .whatsapp-contact-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #25D366;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+        
+        .whatsapp-contact-link:hover {
+            background-color: #128C7E;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.3);
         }
         
         .context-badge {
@@ -982,7 +1002,7 @@
             }
         }
 
-        // Base de Conocimientos Completa
+        // Base de Conocimientos Completa - CORREGIDA
         const knowledgeBase = {
             "horario": {
                 keywords: ["horario", "horas", "atienden", "abierto", "cerrado", "cuándo", "apertura", "cierre"],
@@ -1050,7 +1070,7 @@
                             <p style="margin-top: 10px;">
                                 <i class="fas fa-car"></i> Estacionamiento gratuito disponible
                             </p>
-                            <a href="https://maps.app.goo.gl/QwbsV61pbyfezrMj7" class="contact-link" style="margin-top: 15px;">
+                            <a href="https://maps.app.goo.gl/QwbsV61pbyfezrMj7" target="_blank" class="contact-link" style="margin-top: 15px;">
                                 <i class="fas fa-directions"></i> Ver en Google Maps
                             </a>
                         </div>
@@ -1133,8 +1153,8 @@
                                 <li><strong>Teléfono Corporativo:</strong> +1 (555) 222-3333</li>
                                 <li><strong>Sala de Juntas Virtual:</strong> teams.aegisseguridad.com</li>
                             </ul>
-                            <a href="#" class="contact-link" style="margin-top: 15px;">
-                                <i class="fas fa-calendar-check"></i> Agendar Reunión Ejecutiva
+                            <a href="https://wa.me/15559876543?text=Hola, necesito una reunión ejecutiva para discutir soluciones corporativas de ciberseguridad" target="_blank" class="contact-link whatsapp-contact-link" style="margin-top: 15px;">
+                                <i class="fab fa-whatsapp"></i> Agendar Reunión Ejecutiva
                             </a>
                         </div>
                     `
@@ -1346,8 +1366,8 @@
                             <p style="margin-top: 10px;">
                                 <i class="fas fa-percentage"></i> Descuento del 15% en el primer año
                             </p>
-                            <a href="#" class="contact-link" style="margin-top: 15px;">
-                                <i class="fas fa-file-invoice-dollar"></i> Solicitar Presupuesto Personalizado
+                            <a href="https://wa.me/15559876543?text=Hola, necesito asesoría personalizada sobre sus planes y precios de ciberseguridad" target="_blank" class="contact-link whatsapp-contact-link" style="margin-top: 15px;">
+                                <i class="fab fa-whatsapp"></i> Solicitar Asesoría Personalizada
                             </a>
                         </div>
                     `,
@@ -1365,6 +1385,9 @@
                             <p style="margin-top: 10px; font-style: italic;">
                                 <i class="fas fa-calculator"></i> Todos los precios incluyen IVA y documentación técnica
                             </p>
+                            <a href="https://wa.me/15559876543?text=Hola, necesito información técnica detallada sobre precios de sus servicios de ciberseguridad" target="_blank" class="contact-link whatsapp-contact-link" style="margin-top: 15px;">
+                                <i class="fab fa-whatsapp"></i> Solicitar Cotización Técnica
+                            </a>
                         </div>
                     `,
                     business: `
@@ -1381,8 +1404,8 @@
                             <p style="margin-top: 10px;">
                                 <i class="fas fa-handshake"></i> Contratos anuales con SLA garantizado
                             </p>
-                            <a href="#" class="contact-link" style="margin-top: 15px;">
-                                <i class="fas fa-chart-line"></i> Solicitar Demo y ROI Personalizado
+                            <a href="https://wa.me/15559876543?text=Hola, necesito una cotización empresarial y asesoría sobre planes corporativos de ciberseguridad" target="_blank" class="contact-link whatsapp-contact-link" style="margin-top: 15px;">
+                                <i class="fab fa-whatsapp"></i> Solicitar Demo y ROI Personalizado
                             </a>
                         </div>
                     `
@@ -1505,6 +1528,10 @@
                 case 'capacitacion':
                     message = "Hola, necesito información sobre sus programas de capacitación en ciberseguridad";
                     buttonText = "Información de capacitaciones por WhatsApp";
+                    break;
+                case 'precios':
+                    message = "Hola, necesito asesoría personalizada sobre sus planes y precios de ciberseguridad";
+                    buttonText = "Asesoría personalizada por WhatsApp";
                     break;
                 default:
                     message = "Hola, necesito información sobre sus servicios de ciberseguridad";
